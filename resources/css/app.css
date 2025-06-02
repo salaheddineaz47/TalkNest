@@ -1,0 +1,40 @@
+@import "tailwindcss";
+@source "../views";
+/* @plugin "daisyui"; */
+@plugin "daisyui" {
+    themes:
+        light --default,
+        dark --prefersdark;
+    root: ":root";
+    include:;
+    exclude:;
+    prefix:;
+    logs: true;
+}
+
+@theme {
+    --font-family-sans:
+        "Figtree", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+        "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+    /* Screen Breakpoints */
+    --breakpoint-xs: 420px;
+    --breakpoint-sm: 680px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+    --breakpoint-xl: 1280px;
+    --breakpoint-2xl: 1536px;
+}
+
+#app {
+    @apply h-[100vh];
+}
+.conversation-item .avatar.avatar-online::before,
+.conversation-item .avatar.avatar-offline::before {
+    @apply absolute top-[1%] right-[-1%] h-[10px] w-[10px] outline-1;
+    /* width: 8px;
+    height: 8px;
+    top: 1%;
+    right: 1%; */
+    /* outline-width: 1px; */
+}
