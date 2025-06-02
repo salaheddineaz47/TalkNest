@@ -7,12 +7,52 @@ import {
 } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import NewMessageInput from "./NewMessageInput";
+import axios from "axios";
 
 function MessageInput({ conversation = null }) {
     const [newMessage, setNewMessage] = useState("");
     const [inputErrorMessage, setInputErrorMessage] = useState("");
     const [isSending, setIsSending] = useState(false);
 
+    const onSendClick = () => {
+        if (!newMessage.trim()) {
+            setInputErrorMessage(
+                "Please provide a message or upload attachments.",
+            );
+            setTimeout(() => {
+                setInputErrorMessage("");
+            }, 3000);
+            return;
+        }
+        const formData = new FormData();
+        formData.append("message", newMessage);
+        if (conversation.is_group) {
+            formData.append("group_id", conversation.id);
+        } else if (conversation.is_user) {
+            formData.append("receiver_id", conversation.id);
+        }
+
+        setIsSending(true);
+        axios
+            .post(route("message.store"), formData, {
+                onUploadProgress: (progressEvent) => {
+                    const progress = Math.round(
+                        (progressEvent.loaded * 100) / progressEvent.total,
+                    );
+                    console.log(`Upload progress: ${progress}%`);
+                },
+            })
+            .then((response) => {
+                setIsSending(false);
+                setNewMessage("");
+            })
+            .catch((error) => {
+                setIsSending(false);
+                console.error("Error sending message:", error);
+            });
+    };
+
+    // console.log("conversation message input:", conversation);
     return (
         <div className="flex flex-wrap items-start border-t border-slate-700 py-3">
             <div className="xs:flex-none xs:order-1 order-2 flex-1 p-2">
@@ -39,8 +79,12 @@ function MessageInput({ conversation = null }) {
                     <NewMessageInput
                         value={newMessage}
                         onChange={(ev) => setNewMessage(ev.target.value)}
+                        onSend={onSendClick}
                     />
-                    <button className="btn btn-info rounded-l-none">
+                    <button
+                        onClick={onSendClick}
+                        className="btn btn-info rounded-l-none"
+                    >
                         {isSending && (
                             <span className="loading loading-spinner loading-xs"></span>
                         )}
