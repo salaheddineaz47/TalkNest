@@ -10,7 +10,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 function Home({ selectedConversation = null, messages = null }) {
     const [localMessages, setLocalMessages] = useState(messages);
-    const [scrollFromBottom, setScrollFromBottom] = useState(null);
+    const [scrollFromBottom, setScrollFromBottom] = useState(0);
     const [noMoreMessages, setNoMoreMessages] = useState(false);
     const messagesCtrRef = useRef(null);
     const loadMoreInteresectRef = useRef(null);
@@ -71,6 +71,9 @@ function Home({ selectedConversation = null, messages = null }) {
         }, 10);
 
         const offCreated = on("message.created", messageCreated);
+
+        setScrollFromBottom(0);
+        setNoMoreMessages(false);
 
         return () => {
             offCreated();

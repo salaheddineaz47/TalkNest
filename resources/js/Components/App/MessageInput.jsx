@@ -15,6 +15,7 @@ function MessageInput({ conversation = null }) {
     const [isSending, setIsSending] = useState(false);
 
     const onSendClick = () => {
+        if (isSending) return;
         if (newMessage.trim() === "") {
             setInputErrorMessage(
                 "Please provide a message or upload attachments.",
@@ -83,11 +84,9 @@ function MessageInput({ conversation = null }) {
                     />
                     <button
                         onClick={onSendClick}
+                        disabled={isSending}
                         className="btn btn-info rounded-l-none"
                     >
-                        {isSending && (
-                            <span className="loading loading-spinner loading-xs"></span>
-                        )}
                         <PaperAirplaneIcon className="w-6" />
                         <span className="hidden sm:inline">Send</span>
                     </button>
