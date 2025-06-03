@@ -40,21 +40,31 @@ class MessageController extends Controller
         ]);
     }
 
-    public function loadOlder($message)
+    public function loadOlder($messageId)
     {
+        $message = Message::findOrFail($messageId);
+
         if($message->group_id){
             $messages = Message::where('group_id', $message->group_id)
                 ->where('created_at', '<', $message->created_at)
-                ->latest()->paginate(10);
-        }else{
-            $messages = Message::where('created_at', '<', $message->created_at)->where(function($query) use ($message) {
-                $query->where('sender_id', $message->sender_id)
-                      ->where('receiver_id', $message->receiver_id)->orWhere('sender_id', $message->receiver_id)
-                      ->where('receiver_id', $message->sender_id);
-            })->latest()->paginate(10);
+                ->latest()
+                ->paginate(10);
+        } else {
+            $messages = Message::where('created_at', '<', $message->created_at)
+                ->where(function($query) use ($message) {
+                    $query->where(function($q) use ($message) {
+                        $q->where('sender_id', $message->sender_id)
+                          ->where('receiver_id', $message->receiver_id);
+                    })->orWhere(function($q) use ($message) {
+                        $q->where('sender_id', $message->receiver_id)
+                          ->where('receiver_id', $message->sender_id);
+                    });
+                })
+                ->latest()
+                ->paginate(10);
         }
 
-        return  MessageResource::collection($messages);
+        return MessageResource::collection($messages);
     }
 
     public function store(StoreMessageRequest $request)
@@ -95,6 +105,7 @@ class MessageController extends Controller
         }
 
         SocketMessage::dispatch($message);
+        \Log::info('SocketMessage event dispatched');
 
         return new MessageResource($message);
     }

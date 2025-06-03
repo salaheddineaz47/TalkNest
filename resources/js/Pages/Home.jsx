@@ -1,14 +1,66 @@
 import ConversationHeader from "@/Components/App/ConversationHeader";
 import MessageInput from "@/Components/App/MessageInput";
 import MessageItem from "@/Components/App/MessageItem";
+import { useEventBus } from "@/contexts/EventBusContext";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import ChatLayout from "@/Layouts/ChatLayout";
 import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/solid";
-import { useEffect, useRef, useState } from "react";
+import axios from "axios";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 function Home({ selectedConversation = null, messages = null }) {
     const [localMessages, setLocalMessages] = useState(messages);
+    const [scrollFromBottom, setScrollFromBottom] = useState(null);
+    const [noMoreMessages, setNoMoreMessages] = useState(false);
     const messagesCtrRef = useRef(null);
+    const loadMoreInteresectRef = useRef(null);
+    const { on } = useEventBus();
+
+    const messageCreated = (message) => {
+        if (
+            selectedConversation &&
+            selectedConversation.is_group &&
+            selectedConversation.id == message.group_id
+        ) {
+            setLocalMessages((prevMessages) => [...prevMessages, message]);
+        }
+        if (
+            selectedConversation &&
+            selectedConversation.is_user &&
+            (selectedConversation.id == message.sender_id ||
+                selectedConversation.id == message.receiver_id)
+        ) {
+            setLocalMessages((prevMessages) => [...prevMessages, message]);
+        }
+    };
+
+    const loadMoreMessages = useCallback(() => {
+        // console.log("Loading more messages...", noMoreMessages);
+        if (noMoreMessages) return;
+
+        const firstMessage = localMessages[0];
+        axios
+            .get(route("message.loadOlder", firstMessage.id))
+            .then(({ data }) => {
+                if (data.data.length === 0) {
+                    // console.log("No more messages to load.");
+                    setNoMoreMessages(true);
+                    return;
+                }
+                // calculate how much is scrolled from bottom and scroll to the same position from bottom after the messages are loaded
+                const scrollHeight = messagesCtrRef.current.scrollHeight;
+                const scrollTop = messagesCtrRef.current.scrollTop;
+                const clientHeight = messagesCtrRef.current.clientHeight;
+                const tmpScrollFromBottom =
+                    scrollHeight - scrollTop - clientHeight;
+                console.log("tmpScrollFromBottom:", tmpScrollFromBottom);
+                setScrollFromBottom(tmpScrollFromBottom);
+                setLocalMessages((prevMessages) => [
+                    ...data.data.reverse(),
+                    ...prevMessages,
+                ]);
+            });
+    }, [localMessages, noMoreMessages]);
 
     useEffect(() => {
         setTimeout(() => {
@@ -17,13 +69,57 @@ function Home({ selectedConversation = null, messages = null }) {
                     messagesCtrRef.current.scrollHeight;
             }
         }, 10);
+
+        const offCreated = on("message.created", messageCreated);
+
+        return () => {
+            offCreated();
+        };
     }, [selectedConversation]);
 
     useEffect(() => {
         setLocalMessages(messages ? messages.data.slice().reverse() : []);
     }, [messages]);
 
-    console.log("selectedConversation: Home", messages);
+    useEffect(() => {
+        // Recover scroll from bottom after messages are loaded
+        if (messagesCtrRef.current && scrollFromBottom !== null) {
+            messagesCtrRef.current.scrollTop =
+                messagesCtrRef.current.scrollHeight -
+                messagesCtrRef.current.offsetHeight -
+                scrollFromBottom;
+        }
+
+        if (noMoreMessages) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        loadMoreMessages();
+                    }
+                });
+            },
+            {
+                root: messagesCtrRef.current,
+                rootMargin: "0px 0px 800px 0px",
+            },
+        );
+
+        if (loadMoreInteresectRef.current) {
+            setTimeout(() => {
+                observer.observe(loadMoreInteresectRef.current);
+            }, 100);
+        }
+
+        return () => {
+            if (observer) {
+                observer.disconnect();
+            }
+        };
+    }, [localMessages]);
+
+    // console.log("selectedConversation: Home", messages);
 
     return (
         <>
@@ -57,6 +153,7 @@ function Home({ selectedConversation = null, messages = null }) {
 
                         {localMessages.length > 0 && (
                             <div className="flex flex-1 flex-col">
+                                <div ref={loadMoreInteresectRef}></div>
                                 {localMessages.map((message) => (
                                     <MessageItem
                                         key={message.id}

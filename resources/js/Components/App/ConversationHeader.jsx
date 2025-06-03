@@ -4,7 +4,7 @@ import UserAvatar from "./UserAvatar";
 import GroupAvatar from "./GroupAvatar";
 
 function ConversationHeader({ selectedConversation }) {
-    console.log("selectedConversation header:", selectedConversation);
+    // console.log("selectedConversation header:", selectedConversation);
     return (
         <>
             {selectedConversation && (

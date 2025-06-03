@@ -3,50 +3,60 @@ import Dropdown from "@/Components/Dropdown";
 import NavLink from "@/Components/NavLink";
 import ResponsiveNavLink from "@/Components/ResponsiveNavLink";
 import { Link, usePage } from "@inertiajs/react";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import "@/echo.js";
+import { useEventBus } from "@/contexts/EventBusContext";
 
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;
+    const page = usePage();
+    const user = page.props.auth.user;
     const conversations = page.props.conversations;
+    const { emit } = useEventBus();
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
 
     useEffect(() => {
+        if (!window.Echo) {
+            console.error("Echo is not initialized");
+            return;
+        }
+
         conversations.forEach((conversation) => {
             let channel = `message.group.${conversation.id}`;
             if (conversation.is_user) {
                 channel = `message.user.${[parseInt(user.id), parseInt(conversation.id)].sort((a, b) => a - b).join("-")}`;
             }
-            Echo.private(channel)
-                .error((error) => {
-                    console.error(`Error joining channel ${channel}:`, error);
-                })
-                .listen("MessageSocket", (e) => {
-                    console.log("MessageSocket", e);
-                    const message = e.message;
-                    //if the conversation with the sender is not selected
-                    // Then show a notification
-                    emit("message.created", message);
-                    if (message.sender_id === user.id) return;
+            // console.log("Subscribing to channel:", channel);
 
-                    emit("newMessageNotification", {
-                        user: message.sender,
-                        group_id: message.group_id,
-                        message:
-                            message.message ||
-                            `Shared ${message.attachments.length === 1 ? "attachment" : "attachments"} `,
-                    });
+            window.Echo.private(channel).listen(".SocketMessage", (e) => {
+                console.log("Raw socket message:", e);
+                // Parse the message if it's a string
+                // const messageData = typeof e === "string" ? JSON.parse(e) : e;
+                // console.log("Parsed socket message:", messageData);
+                const message = e.message;
+                emit("message.created", message);
+
+                if (message.sender_id == user.id) return;
+
+                emit("newMessageNotification", {
+                    user: message.sender,
+                    group_id: message.group_id,
+                    message:
+                        message.message ||
+                        `Shared ${message.attachments.length === 1 ? "attachment" : "attachments"} `,
                 });
+            });
         });
 
         return () => {
+            if (!window.Echo) return;
             conversations.forEach((conversation) => {
                 let channel = `message.group.${conversation.id}`;
                 if (conversation.is_user) {
                     channel = `message.user.${[parseInt(user.id), parseInt(conversation.id)].sort((a, b) => a - b).join("-")}`;
                 }
-                Echo.leave(channel);
+                window.Echo.leave(channel);
             });
         };
     }, [conversations]);

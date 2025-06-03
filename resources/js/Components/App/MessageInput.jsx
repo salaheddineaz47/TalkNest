@@ -15,7 +15,7 @@ function MessageInput({ conversation = null }) {
     const [isSending, setIsSending] = useState(false);
 
     const onSendClick = () => {
-        if (!newMessage.trim()) {
+        if (newMessage.trim() === "") {
             setInputErrorMessage(
                 "Please provide a message or upload attachments.",
             );
@@ -35,12 +35,12 @@ function MessageInput({ conversation = null }) {
         setIsSending(true);
         axios
             .post(route("message.store"), formData, {
-                onUploadProgress: (progressEvent) => {
-                    const progress = Math.round(
-                        (progressEvent.loaded * 100) / progressEvent.total,
-                    );
-                    console.log(`Upload progress: ${progress}%`);
-                },
+                // onUploadProgress: (progressEvent) => {
+                //     const progress = Math.round(
+                //         (progressEvent.loaded * 100) / progressEvent.total,
+                //     );
+                //     console.log(`Upload progress: ${progress}%`);
+                // },
             })
             .then((response) => {
                 setIsSending(false);
