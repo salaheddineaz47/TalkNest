@@ -1,5 +1,6 @@
 import ConversationItem from "@/Components/App/ConversationItem";
 import TextInput from "@/Components/TextInput";
+import { useEventBus } from "@/contexts/EventBusContext";
 import { PencilSquareIcon } from "@heroicons/react/24/solid";
 import { usePage } from "@inertiajs/react";
 import { useEffect, useState } from "react";
@@ -11,6 +12,7 @@ function ChatLayout({ children }) {
     const [localConversations, setLocalConversations] = useState([]);
     const [sortedConversations, setSortedConversations] = useState([]);
     const [onlineUsers, setOnlineUsers] = useState({});
+    const { on } = useEventBus();
 
     const isUserOnline = (userId) => onlineUsers[userId];
     // console.log("conversations:", conversations);
@@ -26,8 +28,122 @@ function ChatLayout({ children }) {
     };
 
     useEffect(() => {
+        const messageCreated = (message) => {
+            setLocalConversations((prevConversations) => {
+                return prevConversations.map((conv) => {
+                    // Create a new conversation object to trigger re-render
+                    let updatedConv = { ...conv };
+
+                    // If the message is for user
+                    if (
+                        message.receiver_id &&
+                        !updatedConv.is_group &&
+                        (updatedConv.id == message.receiver_id ||
+                            updatedConv.id == message.sender_id)
+                    ) {
+                        updatedConv.last_message_date = message.created_at;
+                        updatedConv.last_message = message.message;
+                        console.log("Message created for user:", updatedConv);
+                        return updatedConv;
+                    }
+
+                    // If the message is for group
+                    if (
+                        message.group_id &&
+                        updatedConv.is_group &&
+                        updatedConv.id == message.group_id
+                    ) {
+                        updatedConv.last_message_date = message.created_at;
+                        updatedConv.last_message = message.message;
+                        console.log("Message created for group:", updatedConv);
+                        return updatedConv;
+                    }
+                    return updatedConv;
+                });
+            });
+        };
+        // const messageCreated = (message) => {
+        //     console.log("=== MESSAGE EVENT RECEIVED ===");
+        //     console.log("Full message object:", message);
+        //     console.log("Message text:", message.message);
+        //     console.log("Message created_at:", message.created_at);
+        //     console.log("Message receiver_id:", message.receiver_id);
+        //     console.log("Message sender_id:", message.sender_id);
+        //     console.log("Message group_id:", message.group_id);
+        //     console.log("================================");
+
+        //     setLocalConversations((prevConversations) => {
+        //         console.log(
+        //             "Previous conversations before update:",
+        //             prevConversations,
+        //         );
+
+        //         const updatedConversations = prevConversations.map((conv) => {
+        //             // If the message is for user conversation
+        //             if (
+        //                 message.receiver_id &&
+        //                 !conv.is_group &&
+        //                 (conv.id == message.receiver_id ||
+        //                     conv.id == message.sender_id)
+        //             ) {
+        //                 console.log(
+        //                     `MATCH FOUND: Updating user conversation ${conv.id}`,
+        //                 );
+        //                 console.log(`Old message: "${conv.last_message}"`);
+        //                 console.log(`New message: "${message.message}"`);
+        //                 console.log(`Old date: ${conv.last_message_date}`);
+        //                 console.log(`New date: ${message.created_at}`);
+
+        //                 const updated = {
+        //                     ...conv,
+        //                     last_message_date: message.created_at,
+        //                     last_message: message.message,
+        //                 };
+        //                 console.log("Updated conversation object:", updated);
+        //                 return updated;
+        //             }
+
+        //             // If the message is for group conversation
+        //             if (
+        //                 message.group_id &&
+        //                 conv.is_group &&
+        //                 conv.id == message.group_id
+        //             ) {
+        //                 console.log(
+        //                     `MATCH FOUND: Updating group conversation ${conv.id}`,
+        //                 );
+        //                 console.log(`Old message: "${conv.last_message}"`);
+        //                 console.log(`New message: "${message.message}"`);
+
+        //                 const updated = {
+        //                     ...conv,
+        //                     last_message_date: message.created_at,
+        //                     last_message: message.message,
+        //                 };
+        //                 console.log("Updated conversation object:", updated);
+        //                 return updated;
+        //             }
+
+        //             // Return unchanged if message is not for this conversation
+        //             return conv;
+        //         });
+
+        //         console.log(
+        //             "Final updated conversations:",
+        //             updatedConversations,
+        //         );
+        //         return updatedConversations;
+        //     });
+        // };
+        const offCreated = on("message.created", messageCreated);
+        return () => {
+            offCreated();
+        };
+    }, [on]);
+
+    useEffect(() => {
         setSortedConversations(
-            localConversations.sort((a, b) => {
+            [...localConversations].sort((a, b) => {
                 if (a.blocked_at && b.blocked_at)
                     return a.blocked_at > b.blocked_at ? 1 : -1;
                 else if (a.blocked_at)

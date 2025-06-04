@@ -4,7 +4,7 @@ import UserAvatar from "./UserAvatar";
 import GroupAvatar from "./GroupAvatar";
 
 function ConversationHeader({ selectedConversation }) {
-    // console.log("selectedConversation header:", selectedConversation);
+    console.log("selectedConversation header:", selectedConversation);
     return (
         <>
             {selectedConversation && (
@@ -25,7 +25,8 @@ function ConversationHeader({ selectedConversation }) {
                             <h3>{selectedConversation.name}</h3>
                             {selectedConversation.is_group && (
                                 <p className="☐text-gray-500 text-xs">
-                                    {selectedConversation.users.length} members
+                                    {selectedConversation?.user_ids?.length}{" "}
+                                    members
                                 </p>
                             )}
                         </div>

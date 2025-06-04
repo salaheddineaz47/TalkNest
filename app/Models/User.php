@@ -92,7 +92,7 @@ class User extends Authenticatable
             'blocked_at' => $this->blocked_at,
             'is_admin' => (bool) $this->is_admin,
             'last_message' => $this->last_message,
-            'last_message_date' => $this->last_message_date,
+            'last_message_date' => $this->last_message_date ? ($this->last_message_date . " UTC") : null,
         ];
     }
 }
