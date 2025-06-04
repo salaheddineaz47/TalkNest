@@ -43,7 +43,7 @@ function ChatLayout({ children }) {
                     ) {
                         updatedConv.last_message_date = message.created_at;
                         updatedConv.last_message = message.message;
-                        console.log("Message created for user:", updatedConv);
+                        // console.log("Message created for user:", updatedConv);
                         return updatedConv;
                     }
 
@@ -55,86 +55,13 @@ function ChatLayout({ children }) {
                     ) {
                         updatedConv.last_message_date = message.created_at;
                         updatedConv.last_message = message.message;
-                        console.log("Message created for group:", updatedConv);
+                        // console.log("Message created for group:", updatedConv);
                         return updatedConv;
                     }
                     return updatedConv;
                 });
             });
         };
-        // const messageCreated = (message) => {
-        //     console.log("=== MESSAGE EVENT RECEIVED ===");
-        //     console.log("Full message object:", message);
-        //     console.log("Message text:", message.message);
-        //     console.log("Message created_at:", message.created_at);
-        //     console.log("Message receiver_id:", message.receiver_id);
-        //     console.log("Message sender_id:", message.sender_id);
-        //     console.log("Message group_id:", message.group_id);
-        //     console.log("================================");
-
-        //     setLocalConversations((prevConversations) => {
-        //         console.log(
-        //             "Previous conversations before update:",
-        //             prevConversations,
-        //         );
-
-        //         const updatedConversations = prevConversations.map((conv) => {
-        //             // If the message is for user conversation
-        //             if (
-        //                 message.receiver_id &&
-        //                 !conv.is_group &&
-        //                 (conv.id == message.receiver_id ||
-        //                     conv.id == message.sender_id)
-        //             ) {
-        //                 console.log(
-        //                     `MATCH FOUND: Updating user conversation ${conv.id}`,
-        //                 );
-        //                 console.log(`Old message: "${conv.last_message}"`);
-        //                 console.log(`New message: "${message.message}"`);
-        //                 console.log(`Old date: ${conv.last_message_date}`);
-        //                 console.log(`New date: ${message.created_at}`);
-
-        //                 const updated = {
-        //                     ...conv,
-        //                     last_message_date: message.created_at,
-        //                     last_message: message.message,
-        //                 };
-        //                 console.log("Updated conversation object:", updated);
-        //                 return updated;
-        //             }
-
-        //             // If the message is for group conversation
-        //             if (
-        //                 message.group_id &&
-        //                 conv.is_group &&
-        //                 conv.id == message.group_id
-        //             ) {
-        //                 console.log(
-        //                     `MATCH FOUND: Updating group conversation ${conv.id}`,
-        //                 );
-        //                 console.log(`Old message: "${conv.last_message}"`);
-        //                 console.log(`New message: "${message.message}"`);
-
-        //                 const updated = {
-        //                     ...conv,
-        //                     last_message_date: message.created_at,
-        //                     last_message: message.message,
-        //                 };
-        //                 console.log("Updated conversation object:", updated);
-        //                 return updated;
-        //             }
-
-        //             // Return unchanged if message is not for this conversation
-        //             return conv;
-        //         });
-
-        //         console.log(
-        //             "Final updated conversations:",
-        //             updatedConversations,
-        //         );
-        //         return updatedConversations;
-        //     });
-        // };
         const offCreated = on("message.created", messageCreated);
         return () => {
             offCreated();

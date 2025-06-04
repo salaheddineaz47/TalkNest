@@ -29,6 +29,14 @@
 #app {
     @apply h-[100vh];
 }
+
+.EmojiPickerReact.epr-dark-theme {
+    background-color: theme("colors.gray.800");
+}
+.EmojiPickerReact.epr-dark-theme .epr-emoji-category-label {
+    background-color: theme("colors.gray.900");
+}
+
 .conversation-item .avatar.avatar-online::before,
 .conversation-item .avatar.avatar-offline::before {
     @apply absolute top-[1%] right-[-1%] h-[10px] w-[10px] outline-1;

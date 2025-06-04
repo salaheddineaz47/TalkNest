@@ -8,6 +8,8 @@ import {
 import { useState } from "react";
 import NewMessageInput from "./NewMessageInput";
 import axios from "axios";
+import EmojiPicker from "emoji-picker-react";
+import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 
 function MessageInput({ conversation = null }) {
     const [newMessage, setNewMessage] = useState("");
@@ -36,12 +38,12 @@ function MessageInput({ conversation = null }) {
         setIsSending(true);
         axios
             .post(route("message.store"), formData, {
-                // onUploadProgress: (progressEvent) => {
-                //     const progress = Math.round(
-                //         (progressEvent.loaded * 100) / progressEvent.total,
-                //     );
-                //     console.log(`Upload progress: ${progress}%`);
-                // },
+                onUploadProgress: (progressEvent) => {
+                    const progress = Math.round(
+                        (progressEvent.loaded * 100) / progressEvent.total,
+                    );
+                    console.log(`Upload progress: ${progress}%`);
+                },
             })
             .then((response) => {
                 setIsSending(false);
@@ -51,6 +53,20 @@ function MessageInput({ conversation = null }) {
                 setIsSending(false);
                 console.error("Error sending message:", error);
             });
+    };
+
+    const onLikeClick = (ev) => {
+        if (isSending) return;
+        const data = {
+            message: "👍",
+        };
+        if (conversation.is_group) {
+            data["group_id"] = conversation.id;
+        } else if (conversation.is_user) {
+            data["receiver_id"] = conversation.id;
+        }
+
+        axios.post(route("message.store"), data);
     };
 
     // console.log("conversation message input:", conversation);
@@ -97,10 +113,25 @@ function MessageInput({ conversation = null }) {
             </div>
 
             <div className="xs:order-3 order-3 flex p-2">
-                <button className="p-1 text-gray-400 hover:text-gray-300">
-                    <FaceSmileIcon className="h-6 w-6" />
-                </button>
-                <button className="p-1 text-gray-400 hover:text-gray-300">
+                <Popover className="relative">
+                    <PopoverButton className="block p-1 text-gray-400 hover:text-gray-300 focus:outline-none data-active:text-white">
+                        <FaceSmileIcon className="h-6 w-6" />
+                    </PopoverButton>
+                    <PopoverPanel className="absolute right-0 bottom-full z-10">
+                        <div onClick={(e) => e.stopPropagation()}>
+                            <EmojiPicker
+                                theme="dark"
+                                onEmojiClick={(ev) => {
+                                    setNewMessage((mess) => mess + ev.emoji);
+                                }}
+                            />
+                        </div>
+                    </PopoverPanel>
+                </Popover>
+                <button
+                    onClick={onLikeClick}
+                    className="p-1 text-gray-400 hover:text-gray-300"
+                >
                     <HandThumbUpIcon className="h-6 w-6" />
                 </button>
             </div>
