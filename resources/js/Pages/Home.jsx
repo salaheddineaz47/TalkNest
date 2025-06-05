@@ -56,7 +56,7 @@ function Home({ selectedConversation = null, messages = null }) {
                 const clientHeight = messagesCtrRef.current.clientHeight;
                 const tmpScrollFromBottom =
                     scrollHeight - scrollTop - clientHeight;
-                console.log("tmpScrollFromBottom:", tmpScrollFromBottom);
+                // console.log("tmpScrollFromBottom:", tmpScrollFromBottom);
                 setScrollFromBottom(tmpScrollFromBottom);
                 setLocalMessages((prevMessages) => [
                     ...data.data.reverse(),
